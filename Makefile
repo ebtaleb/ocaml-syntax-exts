@@ -64,7 +64,7 @@ OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lex
 
 #pr0.byte: pr0.byte
 
-all: pr0.byte pr1.byte p2.byte p3.byte p4.byte
+all: pr0.byte pr1.byte pr2.byte pr3.byte pr4.byte
 
 %.byte: %.ml
 	@ocamlbuild $(OBB_GFLAGS) $*.byte
@@ -73,6 +73,6 @@ all: pr0.byte pr1.byte p2.byte p3.byte p4.byte
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean
-	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends pr0 pr1 pr2 pr3 pr4 __tmp
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
 
