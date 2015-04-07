@@ -1,0 +1,36 @@
+OCAMLC=ocamlc.opt
+OCAMLOPT=ocamlopt.opt
+OCAMLDEP=ocamldep
+OCAMLDOC=ocamldoc
+DIRS=.
+INCLUDES=-annot -I +camlp4 camlp4lib.cma -pp camlp4of.opt
+GUIINCLUDES=-I +lablgtk2
+OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
+GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
+OCAMLOPTFLAGS= -dtypes $(INCLUDES) # add other options for ocamlopt here
+
+all: test
+
+test: test.cmo
+
+runtest:
+	@camlp4 -parser test.cmo ws0.sh
+
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
+
+.ml.annot:
+	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
+
+.ml.cmo:
+	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
+
+.mli.cmi:
+	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
+
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
+
+clean:
+	rm *.cmo *.cmi *.annot
+
+
