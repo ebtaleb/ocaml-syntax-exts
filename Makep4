@@ -14,7 +14,7 @@ all: test
 test: test.cmo
 
 runtest:
-	@camlp4 -parser test.cmo ws0.sh
+	@camlp4 -parser test.cmo
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
 
