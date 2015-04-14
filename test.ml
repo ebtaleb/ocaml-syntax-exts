@@ -14,6 +14,7 @@ type t_cmd = Cmd of string
                 | LitOut of string
                 | VEcho of t_stmt
                 | Def of string * t_expr
+                | For of string * string * t_cmd
 
 
 let expr = Gram.Entry.mk "expr"
@@ -23,7 +24,8 @@ let _loc = Loc.mk "<string>"
 
 EXTEND Gram
 stmt: [[
-    "out"; "{"; s = cmd; "}" -> Out s
+    "for"; "("; id = LIDENT; ")"; "in"; "("; r = STRING ;")"; ":"; stmts = stmt -> For (id, r, stmts)
+    | "out"; "{"; s = cmd; "}" -> Out s
     | "out"; "{"; s = STRING; "}" -> LitOut s
     | "cmd"; "{"; s = cmd; "}" -> begin match s with Echo s1 -> VEcho s end
     | "cmd"; "{"; s = STRING; e = expr; "}" -> begin match e with String e1 | Var e1 -> VCmd (s, e1) end
@@ -47,6 +49,12 @@ let rec translate_stmt = function
     | Out s -> <:str_item< let $lid:"_"$ = exec_out ($translate_cmd s$) ;; >>
     | LitOut s -> <:str_item< let $lid:"_"$ = exec_out ($str:s$) ;; >>
     | Def (v,e) -> <:str_item< let $lid:v$ = $translate_expr e$ ;; >>
+    | For (i, s, st) -> begin match st with VCmd (s, e) ->
+            <:str_item< let (_, l) = exec_out ($str:s$);;
+        let $lid:i$ = Array.of_list l;;
+        for i = 0 to Array.length $lid:i$ - 1 do exec_cmd ($str:s$ ^ " " ^ $lid:i$.(i)) done;;
+        let _ = exec_cmd ("rm "^"__tmp");;>> end
+
 and translate_cmd = function
     | Echo (Var es) -> <:expr< $lid:"print_endline"$ $lid:es$ >>
     | Echo (String s) -> <:expr< $lid:"print_endline"$ $str:s$ >>
