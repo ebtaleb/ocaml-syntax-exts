@@ -3,7 +3,7 @@ OCAMLOPT=ocamlopt.opt
 OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 DIRS=.
-INCLUDES=-annot -I +camlp4 camlp4lib.cma -pp camlp4of.opt
+INCLUDES=-annot dynlink.cma -I +camlp4 camlp4lib.cma -pp camlp4of.opt
 GUIINCLUDES=-I +lablgtk2
 OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
@@ -15,6 +15,9 @@ test: test.cmo
 
 runtest:
 	@camlp4 -parser test.cmo
+
+bin:
+	ocamlc $(INCLUDES) -o ed -g test.ml
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
 
