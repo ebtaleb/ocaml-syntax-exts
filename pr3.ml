@@ -34,6 +34,11 @@ let exec_out s =
   let lst = convert_file tmp in
   (code,lst);;
 
+let touch name com =
+  let code = Sys.command (com ^ " > "^name) in
+  let lst = convert_file n in
+  (code,lst);;
+
 let exec_out_app n s =
   let code = Sys.command (s ^ ">> "^n) in
   let lst = convert_file n in
