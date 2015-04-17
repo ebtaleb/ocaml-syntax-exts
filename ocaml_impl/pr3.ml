@@ -36,7 +36,7 @@ let exec_out s =
 
 let touch name com =
   let code = Sys.command (com ^ " > "^name) in
-  let lst = convert_file n in
+  let lst = convert_file name in
   (code,lst);;
 
 let exec_out_app n s =

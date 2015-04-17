@@ -19,7 +19,7 @@ type t_cmd = Cmd of string
                 | VEcho of t_stmt
                 | Def of string * t_expr
                 | For of string * string * t_cmd
-                | ForRange of string * string * string * t_cmd
+                | ForRange of string * string * string * t_cmd list
                 | Concat of string * string * string
                 | DefArray of string
 
@@ -31,7 +31,8 @@ let _loc = Loc.mk "<string>"
 EXTEND Gram
 stmt: [[
     "array"; "{"; id = LIDENT; "}" -> DefArray id
-    | "for"; "("; id = LIDENT; ")"; "in"; "("; i1 = INT; i2 = INT; ")"; ":"; stmts = stmt -> ForRange (id, i1, i2, stmts)
+    (*| "for"; "("; id = LIDENT; ")"; "in"; "("; i1 = INT; i2 = INT; ")"; ":"; stmts = stmt -> ForRange (id, i1, i2, stmts)*)
+    | "for"; "("; id = LIDENT; ")"; "in"; "("; i1 = INT; i2 = INT; ")"; ":"; stmts = LIST1 stmt SEP ";" -> ForRange (id, i1, i2, stmts)
     | "for"; "("; id = LIDENT; ")"; "in"; "("; r = STRING ;")"; ":"; stmts = stmt -> For (id, r, stmts)
     | "out"; "{"; s = cmd; "}" -> Out s
     | "out"; "{"; s = STRING; e = expr; "}"; ">"; f = STRING ->
@@ -82,45 +83,50 @@ END ;;
 
 let rec translate_stmt = function
     | Cmd s -> <:str_item< let $lid:"_"$ = exec_cmd ($str:s$) ;; >>
-    | VCmd (s,e) -> <:str_item< let $lid:"_"$ = exec_out ($str:s$ ^ " " ^ ! $lid:e$) ;; >>
+    | VCmd (s,e) -> <:str_item< let $lid:"_"$ = exec_out_print ($str:s$ ^ " " ^ ! $lid:e$) ;; >>
     | ACmd (s,e) -> <:str_item< let $lid:"_"$ = exec_out ($str:s$ ^ " " ^ $translate_expr e$) ;; >>
     | VEcho (s) ->  <:str_item< let $lid:"_"$ = $translate_cmd s$ ;; >>
     | Out s -> <:str_item< let $lid:"_"$ = exec_out ($translate_cmd s$) ;; >>
     | LitOut s -> <:str_item< let $lid:"_"$ = exec_out ($str:s$) ;; >>
     | Concat (lo, ro1, ro2) -> <:str_item< $lid:lo$ := ! $lid:ro1$ ^ $lid:ro2$ ;; >>
-    | DefArray id -> <:str_item<let $lid:id$ = Array.make 1000 [];;  >>
+    | DefArray id -> <:str_item<let $lid:id$ = Array.make 1000 "";;  >>
     | Def (v,e) ->
         begin
             match e with
                 Var s | String s -> <:str_item< let $lid:v$ = $lid:"ref"$ $str:s$ ;; >>
                 | Int i -> <:str_item< let $lid:v$ = $lid:"ref"$ $int:i$ ;; >>
         end
-    | For (i, s, st) ->
+    | For (i, sit, st) ->
         begin
             match st with VCmd (s, e) ->
-                <:str_item< let (_, l) = exec_out ($str:s$);;
+                <:str_item< let (_, l) = exec_out ($str:sit$);;
                 let $lid:i$ = Array.of_list l;;
                 for i = 0 to Array.length $lid:i$ - 1 do exec_cmd ($str:s$ ^ " " ^ $lid:i$.(i)) done;;
-                let _ = exec_cmd ("rm "^"__tmp");;>>
+                let _ = exec_cmd ("rm tmp");;>>
             | Concat (lo, ro1, ro2) ->
-                <:str_item< let (_, l) = exec_out ($str:s$);;
+                <:str_item< let (_, l) = exec_out ($str:sit$);;
                 let $lid:i$ = Array.of_list l;;
-                for i = 0 to Array.length $lid:i$ - 1 do $lid:lo$ := ! $lid:ro1$ ^ $lid:ro2$.(i) done;;
-                let _ = exec_cmd ("rm "^"__tmp");;>>
+                for i = 0 to Array.length $lid:i$ - 1 do $lid:lo$ := ! $lid:ro1$ ^ (" " ^ $lid:ro2$.(i)); done;;
+                let _ = exec_cmd ("rm tmp");;>>
             | VOut (cs, vs, f) ->
-                <:str_item< let (_, l) = exec_out ($str:s$);;
+                <:str_item< let (_, l) = exec_out ($str:sit$);;
                 let $lid:i$ = Array.of_list l;;
                 for i = 0 to Array.length $lid:i$ - 1 do exec_out_app ($str:f$) ($str:cs$ ^ " " ^ $lid:vs$.(i)) done;;
-                let _ = exec_cmd ("rm "^"__tmp");;>>
+                let _ = exec_cmd ("rm tmp");;>>
         end
     | ForRange (i, i1, i2, st) ->
+            (*let loop_exp = <:expr< for $lid:i$ = $int:i1$ to $int:i2$ do  >> in*)
+            (*let done_exp = <:expr < done;;>> in*)
         begin
-            match st with Concat (lo, ro1, ro2) ->
+            match st with x::xs ->
+                begin
+            match x with Concat (lo, ro1, ro2) ->
                 <:str_item<
                 for $lid:i$ = $int:i1$ to $int:i2$ do $lid:lo$ := ! $lid:ro1$ ^ $lid:ro2$.(i) done;;
-                let _ = exec_cmd ("rm "^"__tmp");;>>
-            | ACmd (s,e) -> <:str_item< for $lid:i$ = $int:i1$ to $int:i2$ do exec_out ($str:s$ ^ " " ^ $translate_expr e$) done;; >>
+                let _ = exec_cmd ("rm tmp");;>>
+            | ACmd (s,e) -> <:str_item< for $lid:i$ = $int:i1$ to $int:i2$ do exec_out_print ($str:s$ ^ " " ^ $translate_expr e$) done;; >>
             | _ -> failwith "nope2"
+                end
         end
 and translate_cmd = function
     | Echo (Var es) -> <:expr< $lid:"print_endline"$ $lid:es$ >>

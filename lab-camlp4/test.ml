@@ -1,2 +1,0 @@
-def name = "world"
- print "hello", name
