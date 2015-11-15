@@ -75,5 +75,3 @@ run-ws4:
 
 clean:
 	rm *.cmo *.cmi *.annot ed final.ml a.out ws0_ex.ml ws1_ex.ml ws2_ex.ml ws3_ex.ml ws4_ex.ml tmp
-
-

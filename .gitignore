@@ -6,3 +6,10 @@ pr2
 pr3
 pr4
 __tmp
+tmp
+*.cmi
+*.cmo
+a.out
+*.annot
+ed
+final.ml

@@ -1,0 +1,1 @@
+let%cmd files = ref "*.ml" in wc !files
